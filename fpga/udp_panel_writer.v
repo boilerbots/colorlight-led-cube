@@ -37,7 +37,6 @@ module udp_panel_writer
         if (reset) begin
             udp_source_ready <= 1'b0;
             udp_state <= STATE_WAIT_PACKET;
-            led_reg   <= 1'b1;
             ctrl_en_reg <= 6'b0;
             ctrl_addr <= 16'b0;
             ctrl_wdat <= 16'b0;

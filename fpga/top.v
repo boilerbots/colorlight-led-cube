@@ -23,12 +23,12 @@ module top
     output wire led,
     output wire phy_resetn,
 
-    output wire [5:0] R0,
-    output wire [5:0] G0,
-    output wire [5:0] B0,
-    output wire [5:0] R1,
-    output wire [5:0] G1,
-    output wire [5:0] B1,
+    output wire [8:0] R0,
+    output wire [8:0] G0,
+    output wire [8:0] B0,
+    output wire [8:0] R1,
+    output wire [8:0] G1,
+    output wire [8:0] B1,
     output wire A,
     output wire B,
     output wire C,
@@ -80,12 +80,13 @@ module top
     wire  [31:0]  udp_source_data      ;
     wire  [3:0]   udp_source_error     ;
 
-    phy_sequencer phy_sequencer_inst (.clock(clock),
-                  .reset(reset),
-                  .phy_resetn(phy_resetn),
-                  .mdio_scl(mdio_scl),
-                  .mdio_sda(mdio_sda),
-                  .phy_init_done(phy_init_done));
+   // phy_sequencer phy_sequencer_inst (.clock(clock),
+   //               .reset(reset),
+   //               .phy_resetn(phy_resetn),
+   //               .mdio_scl(mdio_scl),
+   //               .mdio_sda(mdio_sda),
+   //               .phy_init_done(phy_init_done));
+//
 
     liteeth_core eternit (
         /* input         */ .sys_clock            (clock                ),
@@ -148,20 +149,19 @@ module top
 
     genvar panel_index;
 
-    wire [5:0] A_int;
-    wire [5:0] B_int;
-    wire [5:0] C_int;
-    wire [5:0] D_int;
-    wire [5:0] E_int;
-    wire [5:0] LAT_int;
-    wire [5:0] OE_int;
-    wire [5:0] CLK_int;
+    wire [8:0] A_int;
+    wire [8:0] B_int;
+    wire [8:0] C_int;
+    wire [8:0] D_int;
+    wire [8:0] E_int;
+    wire [8:0] LAT_int;
+    wire [8:0] OE_int;
+    wire [8:0] CLK_int;
 
     generate
         for (panel_index = 0; panel_index < 6; panel_index=panel_index+1) begin
-
             ledpanel panel_inst (
-                .ctrl_clk(clock),
+                .ctrl_clk(display_clock),
                 .ctrl_en(ctrl_en[panel_index]),
                 .ctrl_wr(ctrl_wr),       // Which color memory block to write
                 .ctrl_addr(ctrl_addr),   // Addr to write color info on [col_info][row_info]
