@@ -32,4 +32,12 @@ flash.svf : top.bit
 
 
 prog : top.svf
-	~/opt/openocd/bin/openocd -f openocd.cfg -c "transport select jtag; init; scan_chain; svf top.svf; shutdown; quit"
+	openocd -f openocd.cfg -c "transport select jtag; init; scan_chain; svf top.svf; shutdown; quit"
+
+clean:
+	rm -f top.json
+	rm -f top.config
+	rm -f top-post-route.json
+	rm -f top.bit
+	rm -f top.svf
+	rm -f flash.svf
