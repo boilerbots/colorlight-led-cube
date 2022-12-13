@@ -121,8 +121,8 @@ module top
         /* output [3:0]  */ .udp_source_error     (udp_source_error     )
     );
 
-    wire [5:0]  ctrl_en;
-    wire [3:0]  ctrl_wr;
+    wire [8:0]  ctrl_en;
+    wire [2:0]  ctrl_wr;
     wire [15:0] ctrl_addr;
     wire [23:0] ctrl_wdat;
 
@@ -159,7 +159,7 @@ module top
     wire [8:0] CLK_int;
 
     generate
-        for (panel_index = 0; panel_index < 6; panel_index=panel_index+1) begin
+        for (panel_index = 0; panel_index < 9; panel_index=panel_index+1) begin
             ledpanel panel_inst (
                 .ctrl_clk(display_clock),
                 .ctrl_en(ctrl_en[panel_index]),

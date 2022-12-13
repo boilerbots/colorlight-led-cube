@@ -38,7 +38,8 @@ module ledpanel (
 	localparam integer SIZE_BITS = $clog2(CHAIN_LENGTH);
 
 	reg [INPUT_DEPTH-1:0] video_mem [0:CHAIN_LENGTH*PIXEL_COUNT-1];
-	reg [COLOR_DEPTH-1:0] gamma_mem [0:2**BITS_GREEN-1];
+	reg [COLOR_DEPTH-1:0] gamma_mem_6 [0:2**BITS_GREEN-1];
+	reg [COLOR_DEPTH-1:0] gamma_mem_5 [0:2**BITS_RED-1];
 
 	initial begin:video_mem_init
 		panel_a <= 0;
@@ -47,11 +48,10 @@ module ledpanel (
 		panel_d <= 0;
 		panel_e <= 0;
 
-		$readmemh("6bit_to_7bit_gamma.mem",gamma_mem);
+		$readmemh("gamma_6_to_8.mem",gamma_mem_6);
+		$readmemh("gamma_5_to_8.mem",gamma_mem_5);
 
 		$readmemh("Bliss.mem",video_mem);
-		 // $readmemh("green.mem",video_mem_g);
-		//$readmemh("blue.mem",video_mem_b);
 	end
 
 	/*always @(posedge ctrl_clk) begin
@@ -122,18 +122,14 @@ module ledpanel (
 	end
 
 	always @(posedge display_clock) begin
-		//data_rgb[2] <= gamma_mem[video_mem_r[{addr_y, addr_x}]][addr_z];
-		//data_rgb[1] <= gamma_mem[video_mem_r[{addr_y, addr_x}]][addr_z];
-		//data_rgb[0] <= gamma_mem[video_mem_r[{addr_y, addr_x}]][addr_z];
 		current_pixel_rgb <= video_mem[{addr_y, addr_x}];
-		data_rgb[2] <= gamma_mem[current_pixel_rgb[BITS_RED-1:0]][addr_z];
-		data_rgb[1] <= gamma_mem[current_pixel_rgb[BITS_GREEN-1 + BITS_RED-1:BITS_RED]][addr_z];
-		data_rgb[0] <= gamma_mem[current_pixel_rgb[BITS_GREEN-1 + BITS_RED-1 + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
-
-		//data_rgb[2] <= gamma_mem[current_pixel_rgb[5:0]][addr_z];
-		//data_rgb[1] <= gamma_mem[current_pixel_rgb[5:0]][addr_z];
-		//data_rgb[0] <= gamma_mem[current_pixel_rgb[5:0]][addr_z];
-
+		
+		// Red
+		data_rgb[2] <= gamma_mem_5[current_pixel_rgb[BITS_RED-1:0]][addr_z];
+		// Green
+		data_rgb[1] <= gamma_mem_6[current_pixel_rgb[BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
+		// Blue
+		data_rgb[0] <= gamma_mem_5[current_pixel_rgb[BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
 	end
 
 	always @(posedge display_clock) begin
