@@ -108,46 +108,46 @@ module ledpanel (
 	end
 
 	always @(posedge display_clock) begin
-		panel_oe = 64*CHAIN_LENGTH-8 < cnt_x && cnt_x < 64*CHAIN_LENGTH+8;
+		panel_oe <= 64*CHAIN_LENGTH-8 < cnt_x && cnt_x < 64*CHAIN_LENGTH+8;
 		if (state) begin
-			panel_clk = 1 < cnt_x && cnt_x < 64*CHAIN_LENGTH+2;
-			panel_stb = cnt_x == 64*CHAIN_LENGTH+2;
+			panel_clk <= 1 < cnt_x && cnt_x < 64*CHAIN_LENGTH+2;
+			panel_stb <= cnt_x == 64*CHAIN_LENGTH+2;
 		end else begin
-			panel_clk = 0;
-			panel_stb = 0;
+			panel_clk <= 0;
+			panel_stb <= 0;
 		end
 	end
 
 	always @(posedge display_clock) begin
-		addr_x = cnt_x[5+SIZE_BITS:0];
-		addr_y = cnt_y + 32*(!state);
-		addr_z = cnt_z;
+		addr_x <= cnt_x[5+SIZE_BITS:0];
+		addr_y <= cnt_y + 32*(!state);
+		addr_z <= cnt_z;
 	end
 
 	always @(posedge display_clock) begin
 		// Red - 4:0
-		data_rgb[2] = gamma_mem_red[video_mem[{addr_y, addr_x}][BITS_RED-1:0]][addr_z];
+		data_rgb[2] <= gamma_mem_red[video_mem[{addr_y, addr_x}][BITS_RED-1:0]][addr_z];
 		// Green - 10:5
-		data_rgb[1] = gamma_mem_green[video_mem[{addr_y, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
+		data_rgb[1] <= gamma_mem_green[video_mem[{addr_y, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
 		// Blue - 15:11
-		data_rgb[0] = gamma_mem_blue[video_mem[{addr_y, addr_x}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
+		data_rgb[0] <= gamma_mem_blue[video_mem[{addr_y, addr_x}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
 	end
 
 	always @(posedge display_clock) begin
-		data_rgb_q <= data_rgb;
+		data_rgb_q = data_rgb;
 		if (!state) begin
 			if (0 < cnt_x && cnt_x < 64*CHAIN_LENGTH+1) begin
-				{panel_r1, panel_r0} = {data_rgb[2], data_rgb_q[2]};
-				{panel_g1, panel_g0} = {data_rgb[1], data_rgb_q[1]};
-				{panel_b1, panel_b0} = {data_rgb[0], data_rgb_q[0]};
+				{panel_r1, panel_r0} <= {data_rgb[2], data_rgb_q[2]};
+				{panel_g1, panel_g0} <= {data_rgb[1], data_rgb_q[1]};
+				{panel_b1, panel_b0} <= {data_rgb[0], data_rgb_q[0]};
 			end else begin
-				{panel_r1, panel_r0} = 0;
-				{panel_g1, panel_g0} = 0;
-				{panel_b1, panel_b0} = 0;
+				{panel_r1, panel_r0} <= 0;
+				{panel_g1, panel_g0} <= 0;
+				{panel_b1, panel_b0} <= 0;
 			end
 		end
 		else if (cnt_x == 64*CHAIN_LENGTH)  begin
-			{panel_e, panel_d, panel_c, panel_b, panel_a} = cnt_y;
+			{panel_e, panel_d, panel_c, panel_b, panel_a} <= cnt_y;
 		end
 	end
 endmodule
