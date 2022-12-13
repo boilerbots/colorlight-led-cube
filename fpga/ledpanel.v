@@ -24,22 +24,24 @@ module ledpanel (
 	output reg panel_a, panel_b, panel_c, panel_d, panel_e, panel_clk, panel_stb, panel_oe
 );
 
-	parameter integer HEIGHT               = 64;
-	parameter integer WIDTH                = 64;
-	parameter integer PIXEL_COUNT          = HEIGHT * WIDTH;
-	parameter integer INPUT_DEPTH          = BITS_RED + BITS_GREEN + BITS_BLUE;     // bits of color before gamma correction
-	parameter integer COLOR_DEPTH          = 8;    // bits of color after gamma correction
-	parameter integer CHAIN_LENGTH         = 1;     // number of panels in chain
+	localparam integer HEIGHT               = 64;
+	localparam integer WIDTH                = 64;
+	localparam integer PIXEL_COUNT          = HEIGHT * WIDTH;
+	localparam integer INPUT_DEPTH          = BITS_RED + BITS_GREEN + BITS_BLUE;     // bits of color before gamma correction
+	localparam integer COLOR_DEPTH          = 8;    // bits of color after gamma correction
+	localparam integer CHAIN_LENGTH         = 1;     // number of panels in chain
 
-	parameter integer BITS_RED             = 5;
-	parameter integer BITS_GREEN           = 6;
-	parameter integer BITS_BLUE            = 5;
+	localparam integer BITS_RED             = 5;
+	localparam integer BITS_GREEN           = 6;
+	localparam integer BITS_BLUE            = 5;
 
 	localparam integer SIZE_BITS = $clog2(CHAIN_LENGTH);
 
 	reg [INPUT_DEPTH-1:0] video_mem [0:CHAIN_LENGTH*PIXEL_COUNT-1];
-	reg [COLOR_DEPTH-1:0] gamma_mem_6 [0:2**BITS_GREEN-1];
-	reg [COLOR_DEPTH-1:0] gamma_mem_5 [0:2**BITS_RED-1];
+
+	reg [COLOR_DEPTH-1:0] gamma_mem_red   [0:(2**BITS_RED)-1];
+	reg [COLOR_DEPTH-1:0] gamma_mem_green [0:(2**BITS_GREEN)-1];
+	reg [COLOR_DEPTH-1:0] gamma_mem_blue  [0:(2**BITS_RED)-1];
 
 	initial begin:video_mem_init
 		panel_a <= 0;
@@ -48,8 +50,9 @@ module ledpanel (
 		panel_d <= 0;
 		panel_e <= 0;
 
-		$readmemh("gamma_6_to_8.mem",gamma_mem_6);
-		$readmemh("gamma_5_to_8.mem",gamma_mem_5);
+		$readmemh("gamma_5_to_8.mem",gamma_mem_red);
+		$readmemh("gamma_6_to_8.mem",gamma_mem_green);
+		$readmemh("gamma_5_to_8.mem",gamma_mem_blue);
 
 		$readmemh("Bliss.mem",video_mem);
 	end
@@ -105,48 +108,46 @@ module ledpanel (
 	end
 
 	always @(posedge display_clock) begin
-		panel_oe <= 64*CHAIN_LENGTH-8 < cnt_x && cnt_x < 64*CHAIN_LENGTH+8;
+		panel_oe = 64*CHAIN_LENGTH-8 < cnt_x && cnt_x < 64*CHAIN_LENGTH+8;
 		if (state) begin
-			panel_clk <= 1 < cnt_x && cnt_x < 64*CHAIN_LENGTH+2;
-			panel_stb <= cnt_x == 64*CHAIN_LENGTH+2;
+			panel_clk = 1 < cnt_x && cnt_x < 64*CHAIN_LENGTH+2;
+			panel_stb = cnt_x == 64*CHAIN_LENGTH+2;
 		end else begin
-			panel_clk <= 0;
-			panel_stb <= 0;
+			panel_clk = 0;
+			panel_stb = 0;
 		end
 	end
 
 	always @(posedge display_clock) begin
-		addr_x <= cnt_x[5+SIZE_BITS:0];
-		addr_y <= cnt_y + 32*(!state);
-		addr_z <= cnt_z;
+		addr_x = cnt_x[5+SIZE_BITS:0];
+		addr_y = cnt_y + 32*(!state);
+		addr_z = cnt_z;
 	end
 
 	always @(posedge display_clock) begin
-		current_pixel_rgb <= video_mem[{addr_y, addr_x}];
-		
-		// Red
-		data_rgb[2] <= gamma_mem_5[current_pixel_rgb[BITS_RED-1:0]][addr_z];
-		// Green
-		data_rgb[1] <= gamma_mem_6[current_pixel_rgb[BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
-		// Blue
-		data_rgb[0] <= gamma_mem_5[current_pixel_rgb[BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
+		// Red - 4:0
+		data_rgb[2] = gamma_mem_red[video_mem[{addr_y, addr_x}][BITS_RED-1:0]][addr_z];
+		// Green - 10:5
+		data_rgb[1] = gamma_mem_green[video_mem[{addr_y, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
+		// Blue - 15:11
+		data_rgb[0] = gamma_mem_blue[video_mem[{addr_y, addr_x}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
 	end
 
 	always @(posedge display_clock) begin
 		data_rgb_q <= data_rgb;
 		if (!state) begin
 			if (0 < cnt_x && cnt_x < 64*CHAIN_LENGTH+1) begin
-				{panel_r1, panel_r0} <= {data_rgb[2], data_rgb_q[2]};
-				{panel_g1, panel_g0} <= {data_rgb[1], data_rgb_q[1]};
-				{panel_b1, panel_b0} <= {data_rgb[0], data_rgb_q[0]};
+				{panel_r1, panel_r0} = {data_rgb[2], data_rgb_q[2]};
+				{panel_g1, panel_g0} = {data_rgb[1], data_rgb_q[1]};
+				{panel_b1, panel_b0} = {data_rgb[0], data_rgb_q[0]};
 			end else begin
-				{panel_r1, panel_r0} <= 0;
-				{panel_g1, panel_g0} <= 0;
-				{panel_b1, panel_b0} <= 0;
+				{panel_r1, panel_r0} = 0;
+				{panel_g1, panel_g0} = 0;
+				{panel_b1, panel_b0} = 0;
 			end
 		end
 		else if (cnt_x == 64*CHAIN_LENGTH)  begin
-			{panel_e, panel_d, panel_c, panel_b, panel_a} <= cnt_y;
+			{panel_e, panel_d, panel_c, panel_b, panel_a} = cnt_y;
 		end
 	end
 endmodule

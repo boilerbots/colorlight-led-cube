@@ -10,7 +10,7 @@ YOSYS_SCRIPT:=syn.ys
 all : top.svf
 
 ../pll.v :
-	ecppll -i 25 --clkout0_name clock --clkout0 125 --clkout1_name panel_clock --clkout1 52 -f ../pll.v
+	ecppll -i 25 --clkout0_name clock --clkout0 125 --clkout1_name panel_clock --clkout1 75 -f ../pll.v
 
 ../liteeth_core.v : ../liteeth.yml
 	liteeth_gen --gateware-dir ../ --no-compile-software ../liteeth.yml
@@ -35,6 +35,7 @@ prog : top.svf
 	openocd -f openocd.cfg -c "transport select jtag; init; scan_chain; svf top.svf; shutdown; quit"
 
 clean:
+	rm -r ../pll.v
 	rm -f top.json
 	rm -f top.config
 	rm -f top-post-route.json

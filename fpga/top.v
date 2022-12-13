@@ -53,13 +53,13 @@ module top
 
     pll pll_inst(.clkin(osc25m),.clock(clock),.panel_clock(display_clock),.locked(locked));
 
-    always @(posedge clock or negedge locked) begin
-        if (locked == 1'b0) begin
-            locked_reset <= 4'b1111;
-        end else begin
-            locked_reset <= {locked_reset[2:0], 1'b0};
-        end
-    end
+    //always @(posedge clock or negedge locked) begin
+    //    if (locked == 1'b0) begin
+    //        locked_reset <= 4'b1111;
+    //    end else begin
+    //        locked_reset <= {locked_reset[2:0], 1'b0};
+    //    end
+    //end
 
     wire          udp_sink_valid       = 1'b0;
     wire          udp_sink_last        = 1'b0;
@@ -80,13 +80,13 @@ module top
     wire  [31:0]  udp_source_data      ;
     wire  [3:0]   udp_source_error     ;
 
-   // phy_sequencer phy_sequencer_inst (.clock(clock),
-   //               .reset(reset),
-   //               .phy_resetn(phy_resetn),
-   //               .mdio_scl(mdio_scl),
-   //               .mdio_sda(mdio_sda),
-   //               .phy_init_done(phy_init_done));
-//
+    // phy_sequencer phy_sequencer_inst (.clock(clock),
+    //               .reset(reset),
+    //               .phy_resetn(phy_resetn),
+    //               .mdio_scl(mdio_scl),
+    //               .mdio_sda(mdio_sda),
+    //               .phy_init_done(phy_init_done));
+    //
 
     liteeth_core eternit (
         /* input         */ .sys_clock            (clock                ),
@@ -159,7 +159,7 @@ module top
     wire [8:0] CLK_int;
 
     generate
-        for (panel_index = 0; panel_index < 9; panel_index=panel_index+1) begin
+        for (panel_index = 0; panel_index <= 8; panel_index=panel_index+1) begin
             ledpanel panel_inst (
                 .ctrl_clk(display_clock),
                 .ctrl_en(ctrl_en[panel_index]),
