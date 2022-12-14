@@ -1,7 +1,7 @@
 <?php
 $gamma  = 2.8;
-$input  = 2**6;
-$output = 2**8;
+$input  = 2**5;
+$output = 2**7;
 
 for ($i=0; $i < $input; $i++)
 {
