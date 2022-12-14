@@ -1,5 +1,5 @@
 <?php
-$im = imagecreatefromjpeg('Bliss2.jpg');
+$im = imagecreatefromjpeg('Bliss2_32.jpg');
 $width = imagesx($im);
 $height = imagesy($im);
 

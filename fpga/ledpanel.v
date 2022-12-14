@@ -24,7 +24,7 @@ module ledpanel (
 	output reg panel_a, panel_b, panel_c, panel_d, panel_e, panel_clk, panel_stb, panel_oe
 );
 
-	localparam integer HEIGHT               = 64;
+	localparam integer HEIGHT               = 32;
 	localparam integer WIDTH                = 64;
 	localparam integer PIXEL_COUNT          = HEIGHT * WIDTH;
 	localparam integer INPUT_DEPTH          = BITS_RED + BITS_GREEN + BITS_BLUE;     // bits of color before gamma correction
@@ -34,7 +34,13 @@ module ledpanel (
 	localparam integer BITS_GREEN           = 6;
 	localparam integer BITS_BLUE            = 5;
 
+	localparam integer BITS_HEIGHT          = $clog2(HEIGHT) - 1;
+	localparam integer BITS_WIDTH           = $clog2(WIDTH) - 1;
+	localparam integer BITS_COLOR_DEPTH     = $clog2(COLOR_DEPTH) - 1;
+
 	localparam integer SIZE_BITS = 1;
+
+	localparam integer RGB1_OFFSET = 16; // height offset between RGB0 and RGB1 lines
 
 	reg [INPUT_DEPTH-1:0] video_mem [0:PIXEL_COUNT-1];
 
@@ -62,31 +68,31 @@ module ledpanel (
 		if (ctrl_en && ctrl_wr[0]) video_mem_b[ctrl_addr] <= ctrl_wdat[0+INPUT_DEPTH-1:0];
 	end*/
 
-	reg [5+COLOR_DEPTH+SIZE_BITS:0] cnt_x = 0;
-	reg [4:0]                       cnt_y = 0;
-	reg [3:0]                       cnt_z = 0;
+	reg [BITS_WIDTH+COLOR_DEPTH:0]  cnt_x = 0;
+	reg [BITS_HEIGHT:0]             cnt_y = 0;
+	reg [BITS_COLOR_DEPTH:0]        cnt_z = 0;
 	reg state = 0;
 
-	reg [5+SIZE_BITS:0] addr_x;
-	reg [5:0]           addr_y;
-	reg [5:0]           addr_y_q;
-	reg [3:0]           addr_z;
-	reg [5:0]           data_rgb;
-	reg [5+COLOR_DEPTH+SIZE_BITS:0] max_cnt_x;
+	reg [BITS_WIDTH:0] 		addr_x;
+	reg [BITS_HEIGHT:0]		addr_y_rgb0;
+	reg [BITS_HEIGHT:0]		addr_y_rgb1;
+	reg [BITS_COLOR_DEPTH:0] 	addr_z;
+	reg [5:0] 			data_rgb; // R0, G0, B0, R1, G1, G2 -> 6 bits
+	reg [BITS_WIDTH+COLOR_DEPTH+SIZE_BITS:0] max_cnt_x;
 
 	reg [INPUT_DEPTH-1:0] current_pixel_rgb;
 
 
 	always @(posedge display_clock) begin
 		case (cnt_z)
-			0: max_cnt_x = 64+8;
-			1: max_cnt_x = 128;
-			2: max_cnt_x = 256;
-			3: max_cnt_x = 512;
-			4: max_cnt_x = 1024;
-			5: max_cnt_x = 2048;
-			6: max_cnt_x = 4096;
-			7: max_cnt_x = 8192;
+			0: max_cnt_x = 64 * ($pow(2, 0));
+			1: max_cnt_x = 64 * ($pow(2, 1));
+			2: max_cnt_x = 64 * ($pow(2, 2));
+			3: max_cnt_x = 64 * ($pow(2, 3));
+			4: max_cnt_x = 64 * ($pow(2, 4));
+			5: max_cnt_x = 64 * ($pow(2, 5));
+			6: max_cnt_x = 64 * ($pow(2, 6));
+			7: max_cnt_x = 64 * ($pow(2, 7));
 		endcase
 	end
 
@@ -107,10 +113,10 @@ module ledpanel (
 	end
 
 	always @(posedge display_clock) begin
-		panel_oe <= 64-8 < cnt_x && cnt_x < 64+8;
+		panel_oe <= WIDTH-8 < cnt_x && cnt_x < WIDTH+8;
 		if (state) begin
-			panel_clk <= 1 < cnt_x && cnt_x < 64+2;
-			panel_stb <= cnt_x == 64+2;
+			panel_clk <= 1 < cnt_x && cnt_x < WIDTH+2;
+			panel_stb <= cnt_x == WIDTH+2;
 		end else begin
 			panel_clk <= 0;
 			panel_stb <= 0;
@@ -118,42 +124,41 @@ module ledpanel (
 	end
 
 	always @(posedge display_clock) begin
-		addr_x <= cnt_x[5+SIZE_BITS:0];
-		addr_y <= cnt_y + 32*(!state);
-		addr_y_q <= cnt_y + 16;
-		addr_z <= cnt_z;
+		addr_x		<= cnt_x[BITS_WIDTH:0];
+		addr_y_rgb0 	<= cnt_y[BITS_HEIGHT:0];
+		addr_y_rgb1 	<= cnt_y[BITS_HEIGHT:0] + RGB1_OFFSET;
+		addr_z  	<= cnt_z;
 	end
 
 	always @(posedge display_clock) begin
 		// Red - 4:0
-		data_rgb[2] = gamma_mem_red[video_mem[{addr_y, addr_x}][BITS_RED-1:0]][addr_z];
-		data_rgb[5] = gamma_mem_red[video_mem[{addr_y_q, addr_x}][BITS_RED-1:0]][addr_z];
+		data_rgb[0] = gamma_mem_red[video_mem[{addr_x, addr_y_rgb0}][BITS_RED-1:0]][addr_z];
+		data_rgb[1] = gamma_mem_red[video_mem[{addr_x, addr_y_rgb1}][BITS_RED-1:0]][addr_z];
 	end
 	always @(posedge display_clock) begin
 		// Green - 10:5
-		data_rgb[1] = gamma_mem_green[video_mem[{addr_y, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
-		data_rgb[4] = gamma_mem_green[video_mem[{addr_y_q, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
+		data_rgb[2] = gamma_mem_green[video_mem[{addr_x, addr_y_rgb0}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
+		data_rgb[3] = gamma_mem_green[video_mem[{addr_x, addr_y_rgb1}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
 	end
 	always @(posedge display_clock) begin
 		// Blue - 15:11
-		data_rgb[0] = gamma_mem_blue[video_mem[{addr_y, addr_x}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
-		data_rgb[3] = gamma_mem_blue[video_mem[{addr_y_q, addr_x}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
+		data_rgb[4] = gamma_mem_blue[video_mem[{addr_x, addr_y_rgb0}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
+		data_rgb[5] = gamma_mem_blue[video_mem[{addr_x, addr_y_rgb1}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
 	end
 
 	always @(posedge display_clock) begin
-		//data_rgb_q = data_rgb;
 		if (!state) begin
-			if (0 < cnt_x && cnt_x < 64+1) begin
-				{panel_r1, panel_r0} <= {data_rgb[2], data_rgb[5]};
-				{panel_g1, panel_g0} <= {data_rgb[1], data_rgb[4]};
-				{panel_b1, panel_b0} <= {data_rgb[0], data_rgb[3]};
+			if ((0 < cnt_x && cnt_x < WIDTH+1) && (cnt_y < 16)) begin
+				{panel_r1, panel_r0} <= {data_rgb[1], data_rgb[0]};
+				{panel_g1, panel_g0} <= {data_rgb[3], data_rgb[2]};
+				{panel_b1, panel_b0} <= {data_rgb[5], data_rgb[4]};
 			end else begin
 				{panel_r1, panel_r0} <= 0;
 				{panel_g1, panel_g0} <= 0;
 				{panel_b1, panel_b0} <= 0;
 			end
 		end
-		else if (cnt_x == 64)  begin
+		else if (cnt_x == WIDTH)  begin
 			{panel_e, panel_d, panel_c, panel_b, panel_a} <= cnt_y;
 		end
 	end
