@@ -1,12 +1,13 @@
 <?php
-$im = imagecreatefromjpeg('Bliss2_32.jpg');
+$im = imagecreatefrompng('no_signal_32.png');
 $width = imagesx($im);
 $height = imagesy($im);
 
-for ($x = 0; $x < $width; $x++)
+for ($y = 0; $y < $height; $y++)
 {
-	for ($y = 0; $y < $height; $y++)
+	for ($x = 0; $x < $width; $x++)
 	{
+
 		$color = imagecolorat($im, $x, $y);
 		$color_tran = imagecolorsforindex($im, $color);
 

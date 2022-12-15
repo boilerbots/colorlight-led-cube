@@ -53,13 +53,13 @@ module top
 
     pll pll_inst(.clkin(osc25m),.clock(clock),.panel_clock(display_clock),.locked(locked));
 
-    //always @(posedge clock or negedge locked) begin
-    //    if (locked == 1'b0) begin
-    //        locked_reset <= 4'b1111;
-    //    end else begin
-    //        locked_reset <= {locked_reset[2:0], 1'b0};
-    //    end
-    //end
+    always @(posedge clock or negedge locked) begin
+        if (locked == 1'b0) begin
+            locked_reset <= 4'b1111;
+        end else begin
+            locked_reset <= {locked_reset[2:0], 1'b0};
+        end
+    end
 
     wire          udp_sink_valid       = 1'b0;
     wire          udp_sink_last        = 1'b0;
@@ -161,9 +161,8 @@ module top
     generate
         for (panel_index = 0; panel_index <= 8; panel_index=panel_index+1) begin
             ledpanel panel_inst (
-                .ctrl_clk(display_clock),
+                .ctrl_clk(clock),
                 .ctrl_en(ctrl_en[panel_index]),
-                .ctrl_wr(ctrl_wr),       // Which color memory block to write
                 .ctrl_addr(ctrl_addr),   // Addr to write color info on [col_info][row_info]
                 .ctrl_wdat(ctrl_wdat),   // Data to be written [R][G][B]
 
