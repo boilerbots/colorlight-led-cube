@@ -61,7 +61,7 @@ module ledpanel (
 		$readmemh("Bliss.mem",video_mem);
 	end
 
-	always @(posedge display_clock) begin
+	always @(posedge ctrl_clk) begin
 		if (ctrl_en) begin
 			video_mem[ctrl_addr] <= ctrl_wdat;
 		end

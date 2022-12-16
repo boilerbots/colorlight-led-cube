@@ -2,15 +2,17 @@
 
 $sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 
-$xt = 100;
-$yt = 100;
+/*while (true)
+{*/
+    $xt = 100;
+    $yt = 100;
 
-`scrot -q 1 -o -a $xt,$yt,64,32 /tmp/test.png`;
-$im = imagecreatefrompng('/tmp/test.png');
-$im = imagerotate($im, 180, 0);
-send_image_to_port($sock, $im, 2000);
-imagedestroy($im);
-
+    `scrot -q 1 -o -a $xt,$yt,64,32 /tmp/test.png`;
+    $im = imagecreatefrompng('/tmp/test.png');
+    $im = imagerotate($im, 180, 0);
+    send_image_to_port($sock, $im, 2000);
+    imagedestroy($im);
+//}
 
 
 function send_image_to_port($sock, $im, $port)
@@ -24,6 +26,9 @@ function send_image_to_port($sock, $im, $port)
     for ($y = 0; $y < $height; $y++)
     {
         $msg = "";
+        // header
+        $msg .= pack("CC", 5, $y);
+
         for ($x = 0; $x < $width; $x++)
         {
             $color = imagecolorat($im, $x, $y);
@@ -37,13 +42,13 @@ function send_image_to_port($sock, $im, $port)
             $g = (($green  * 1 >> 2) & 0x3f) << 5;
             $b = (($blue  * 1 >> 3) & 0x1f) << 11;
 
-            $addr = str_pad(decbin($y), $panel_height_bits, "0", STR_PAD_LEFT) . str_pad(decbin($x), $panel_width_bits, "0", STR_PAD_LEFT);
-            $msg .= pack("nn", bindec($addr), ($r | $g | $b));
+            // data
+            $msg .= pack("n", ($r | $g | $b));
         }
 
         $len = strlen($msg);
         socket_sendto($sock, $msg, $len, 0, '192.168.178.50', $port);
-        usleep(1000);
+        usleep(500000);
     }
 }
 

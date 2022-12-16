@@ -15,12 +15,16 @@ module udp_panel_writer
 		output reg led_reg
 );
 
-	localparam STATE_WAIT_PACKET = 2'b01, STATE_READ_DATA = 2'b10;
+	localparam STATE_WAIT_PACKET = 3'b001, STATE_READ_HEADER = 3'b010, STATE_READ_DATA = 3'b100;
 
-	reg [1:0] udp_state;
+	reg [2:0] udp_state;
 
-	reg [31:0] data;
+	reg [15:0] data;
 	reg [15:0] byte_count;
+
+	reg [7:0] panel_index;
+	reg [7:0] addr_y;
+	reg [7:0] addr_x;
 
 	initial udp0_source_ready <= 0;
 	initial byte_count <= 0;
@@ -39,38 +43,37 @@ module udp_panel_writer
 
 			case (udp_state)
 				STATE_WAIT_PACKET : begin
-						udp0_source_ready = 1'b1;
-						if (udp0_source_valid) begin
-								if (!udp0_source_last) begin
-									data[31:24] = udp0_source_data;
-									byte_count  = 1;
-									udp_state   = STATE_READ_DATA;
-								end
+					udp0_source_ready = 1'b1;
+					if (udp0_source_valid) begin
+						if (!udp0_source_last) begin
+							panel_index[7:0] = udp0_source_data;
+							udp_state   = STATE_READ_HEADER;
 						end
+					end
+				end
+				STATE_READ_HEADER : begin
+					if (udp0_source_valid) begin
+						addr_y[7:0] = udp0_source_data;
+						udp_state   = STATE_READ_DATA;
+						byte_count  = 0;
+					end
 				end
 				STATE_READ_DATA : begin
 					if (udp0_source_valid) begin
 						byte_count = byte_count + 1;
 
-						//ctrl_en          = 255;
-						//ctrl_addr        = byte_count;
-						//ctrl_wdat[15:0]  = udp0_source_data[7:0];
-
 						if (byte_count == 1) begin
-								data[31:24] = udp0_source_data[7:0];
-						end
-						if (byte_count == 2) begin
-								data[23:16] = udp0_source_data[7:0];
-						end
-						if (byte_count == 3) begin
 								data[15:8] = udp0_source_data[7:0];
 						end
-						if (byte_count == 4) begin
+						if (byte_count == 2) begin
 								data[7:0] = udp0_source_data[7:0];
-								byte_count       = 0;
-								ctrl_en          = 255;
-								ctrl_addr        = data[31:16];
-								ctrl_wdat[15:0]  = data[15:0];
+								addr_x = addr_x + 1;
+								byte_count           = 0;
+								ctrl_en              = 255;
+								ctrl_addr            = 0;
+								ctrl_addr[5:0]		 = addr_x;
+								ctrl_addr[11:6]      = addr_y;
+								ctrl_wdat[15:0]      = data[15:0];
 						end
 
 						if (udp0_source_last) begin

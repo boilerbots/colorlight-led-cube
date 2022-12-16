@@ -5,8 +5,8 @@ $sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 $x = 225;
 $y = 485;
 
-while (true)
-{
+//while (true)
+//{
     $xt = $x;
     $yt = $y;
 
@@ -23,7 +23,7 @@ while (true)
     $im = imagerotate($im, 180, 0);
     send_image_to_port($sock, $im, 0x6600 + (1 << 4));
     imagedestroy($im);*/
-}
+//}
 
 
 
@@ -47,9 +47,9 @@ function send_image_to_port($sock, $im, $port)
             $green = $color_tran['green'];
             $blue = $color_tran['blue'];
 
-            $r = ($red  * 1 >> 3) & 0x1f;
-            $g = (($green  * 1 >> 2) & 0x3f) << 5;
-            $b = (($blue  * 1 >> 3) & 0x1f) << 11;
+            $r = ($red  * 0.6 >> 3) & 0x1f;
+            $g = (($green  * 0.6 >> 2) & 0x3f) << 5;
+            $b = (($blue  * 0.6 >> 3) & 0x1f) << 11;
 
             $addr = str_pad(decbin($y), $panel_height_bits, "0", STR_PAD_LEFT) . str_pad(decbin($x), $panel_width_bits, "0", STR_PAD_LEFT);
             $msg .= pack("nn", bindec($addr), ($r | $g | $b));
@@ -57,7 +57,7 @@ function send_image_to_port($sock, $im, $port)
 
         $len = strlen($msg);
         socket_sendto($sock, $msg, $len, 0, '192.168.178.50', $port);
-        //usleep(1000);
+        usleep(50000);
     }
 }
 
