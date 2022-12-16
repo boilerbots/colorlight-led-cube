@@ -35,7 +35,8 @@ prog : top.svf
 	openocd -f openocd.cfg -c "transport select jtag; init; scan_chain; svf top.svf; shutdown; quit"
 
 clean:
-	rm -r ../pll.v
+	rm -f ../liteeth_core.*
+	rm -f ../pll.v
 	rm -f top.json
 	rm -f top.config
 	rm -f top-post-route.json

@@ -1,5 +1,5 @@
 <?php
-$im = imagecreatefrompng('no_signal_32.png');
+$im = imagecreatefrompng('testpattern_32_full.png');
 $width = imagesx($im);
 $height = imagesy($im);
 
