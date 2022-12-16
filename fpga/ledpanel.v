@@ -61,7 +61,12 @@ module ledpanel (
 		$readmemh("Bliss.mem",video_mem);
 	end
 
-	always @(posedge ctrl_clk) begin
+	reg ctrl2_clk = 0;
+	always @(posedge display_clock) begin
+		ctrl2_clk <= !ctrl2_clk;
+	end
+
+	always @(posedge display_clock) begin
 		if (ctrl_en) begin
 			video_mem[ctrl_addr] <= ctrl_wdat;
 		end
@@ -83,82 +88,100 @@ module ledpanel (
 
 
 	always @(posedge display_clock) begin
-		case (cnt_z)
-			0: max_cnt_x = 64 * ($pow(2, 0));
-			1: max_cnt_x = 64 * ($pow(2, 1));
-			2: max_cnt_x = 64 * ($pow(2, 2));
-			3: max_cnt_x = 64 * ($pow(2, 3));
-			4: max_cnt_x = 64 * ($pow(2, 4));
-			5: max_cnt_x = 64 * ($pow(2, 5));
-			6: max_cnt_x = 64 * ($pow(2, 6));
-			7: max_cnt_x = 64 * ($pow(2, 7));
-		endcase
+		if (ctrl2_clk) begin
+			case (cnt_z)
+				0: max_cnt_x = 64 * ($pow(2, 0));
+				1: max_cnt_x = 64 * ($pow(2, 1));
+				2: max_cnt_x = 64 * ($pow(2, 2));
+				3: max_cnt_x = 64 * ($pow(2, 3));
+				4: max_cnt_x = 64 * ($pow(2, 4));
+				5: max_cnt_x = 64 * ($pow(2, 5));
+				6: max_cnt_x = 64 * ($pow(2, 6));
+				7: max_cnt_x = 64 * ($pow(2, 7));
+			endcase
+		end
 	end
 
 	always @(posedge display_clock) begin
-		state <= !state;
-		if (!state) begin
-			if (cnt_x > max_cnt_x) begin
-				cnt_x <= 0;
-				cnt_z <= cnt_z + 1;
-				if (cnt_z == COLOR_DEPTH-1) begin
-					cnt_y <= cnt_y + 1;
-					cnt_z <= 0;
+		if (ctrl2_clk) begin
+			state <= !state;
+			if (!state) begin
+				if (cnt_x > max_cnt_x) begin
+					cnt_x <= 0;
+					cnt_z <= cnt_z + 1;
+					if (cnt_z == COLOR_DEPTH-1) begin
+						cnt_y <= cnt_y + 1;
+						cnt_z <= 0;
+					end
+				end else begin
+					cnt_x <= cnt_x + 1;
 				end
+			end
+
+		end
+		
+	end
+
+	always @(posedge display_clock) begin
+		if (ctrl2_clk) begin
+			panel_oe <= WIDTH-8 < cnt_x && cnt_x < WIDTH+8;
+			if (state) begin
+				panel_clk <= 1 < cnt_x && cnt_x < WIDTH+2;
+				panel_stb <= cnt_x == WIDTH+2;
 			end else begin
-				cnt_x <= cnt_x + 1;
+				panel_clk <= 0;
+				panel_stb <= 0;
 			end
 		end
 	end
 
 	always @(posedge display_clock) begin
-		panel_oe <= WIDTH-8 < cnt_x && cnt_x < WIDTH+8;
-		if (state) begin
-			panel_clk <= 1 < cnt_x && cnt_x < WIDTH+2;
-			panel_stb <= cnt_x == WIDTH+2;
-		end else begin
-			panel_clk <= 0;
-			panel_stb <= 0;
+		if (ctrl2_clk) begin
+			addr_x		<= cnt_x[BITS_WIDTH:0];
+			addr_y_rgb0 	<= cnt_y[BITS_HEIGHT:0];
+			addr_y_rgb1 	<= cnt_y[BITS_HEIGHT:0] + RGB1_OFFSET;
+			addr_z  	<= cnt_z;
 		end
 	end
 
 	always @(posedge display_clock) begin
-		addr_x		<= cnt_x[BITS_WIDTH:0];
-		addr_y_rgb0 	<= cnt_y[BITS_HEIGHT:0];
-		addr_y_rgb1 	<= cnt_y[BITS_HEIGHT:0] + RGB1_OFFSET;
-		addr_z  	<= cnt_z;
-	end
-
-	always @(posedge display_clock) begin
-		// Red - 4:0
-		data_rgb[0] = gamma_mem_red[video_mem[{addr_y_rgb0, addr_x}][BITS_RED-1:0]][addr_z];
-		data_rgb[1] = gamma_mem_red[video_mem[{addr_y_rgb1, addr_x}][BITS_RED-1:0]][addr_z];
+		if (ctrl2_clk) begin
+			// Red - 4:0
+			data_rgb[0] = gamma_mem_red[video_mem[{addr_y_rgb0, addr_x}][BITS_RED-1:0]][addr_z];
+			data_rgb[1] = gamma_mem_red[video_mem[{addr_y_rgb1, addr_x}][BITS_RED-1:0]][addr_z];
+		end
 	end
 	always @(posedge display_clock) begin
-		// Green - 10:5
-		data_rgb[2] = gamma_mem_green[video_mem[{addr_y_rgb0, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
-		data_rgb[3] = gamma_mem_green[video_mem[{addr_y_rgb1, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
+		if (ctrl2_clk) begin
+			// Green - 10:5
+			data_rgb[2] = gamma_mem_green[video_mem[{addr_y_rgb0, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
+			data_rgb[3] = gamma_mem_green[video_mem[{addr_y_rgb1, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
+		end
 	end
 	always @(posedge display_clock) begin
+		if (ctrl2_clk) begin
 		// Blue - 15:11
 		data_rgb[4] = gamma_mem_blue[video_mem[{addr_y_rgb0, addr_x}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
 		data_rgb[5] = gamma_mem_blue[video_mem[{addr_y_rgb1, addr_x}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
+		end
 	end
 
 	always @(posedge display_clock) begin
-		if (!state) begin
-			if ((0 < cnt_x && cnt_x < WIDTH+1) && (cnt_y < 16)) begin
-				{panel_r1, panel_r0} <= {data_rgb[1], data_rgb[0]};
-				{panel_g1, panel_g0} <= {data_rgb[3], data_rgb[2]};
-				{panel_b1, panel_b0} <= {data_rgb[5], data_rgb[4]};
-			end else begin
-				{panel_r1, panel_r0} <= 0;
-				{panel_g1, panel_g0} <= 0;
-				{panel_b1, panel_b0} <= 0;
+		if (ctrl2_clk) begin
+			if (!state) begin
+				if ((0 < cnt_x && cnt_x < WIDTH+1) && (cnt_y < 16)) begin
+					{panel_r1, panel_r0} <= {data_rgb[1], data_rgb[0]};
+					{panel_g1, panel_g0} <= {data_rgb[3], data_rgb[2]};
+					{panel_b1, panel_b0} <= {data_rgb[5], data_rgb[4]};
+				end else begin
+					{panel_r1, panel_r0} <= 0;
+					{panel_g1, panel_g0} <= 0;
+					{panel_b1, panel_b0} <= 0;
+				end
 			end
-		end
-		else if (cnt_x == WIDTH)  begin
-			{panel_e, panel_d, panel_c, panel_b, panel_a} <= cnt_y;
+			else if (cnt_x == WIDTH)  begin
+				{panel_e, panel_d, panel_c, panel_b, panel_a} <= cnt_y;
+			end
 		end
 	end
 endmodule
