@@ -13,16 +13,16 @@ while (true)
     `scrot -q 1 -o -a $xt,$yt,64,32 /tmp/test.png`;
     $im = imagecreatefrompng('/tmp/test.png');
     $im = imagerotate($im, 180, 0);
-    send_image_to_port($sock, $im, 0x6600 + (1 << 5));
+    send_image_to_port($sock, $im, /*0x6600 + (1 << 5)*/2000);
     imagedestroy($im);
 
-    $yt += 32;
+    /*$yt += 32;
 
     `scrot -q 1 -o -a $xt,$yt,64,32 /tmp/test.png`;
     $im = imagecreatefrompng('/tmp/test.png');
     $im = imagerotate($im, 180, 0);
     send_image_to_port($sock, $im, 0x6600 + (1 << 4));
-    imagedestroy($im);
+    imagedestroy($im);*/
 }
 
 
@@ -57,6 +57,7 @@ function send_image_to_port($sock, $im, $port)
 
         $len = strlen($msg);
         socket_sendto($sock, $msg, $len, 0, '192.168.178.50', $port);
+        //usleep(1000);
     }
 }
 
