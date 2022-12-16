@@ -12,9 +12,10 @@
 
 `default_nettype none
 module ledpanel (
+	input wire [7:0] panel_index,
 	input wire ctrl_clk,
 
-	input wire ctrl_en,
+	input wire [7:0] ctrl_en,
 	input wire [15:0] ctrl_addr, 			// Addr to write color info on [col_info][row_info]
 	input wire [INPUT_DEPTH:0] ctrl_wdat, 		// Data to be written [RGB565]
 
@@ -67,7 +68,7 @@ module ledpanel (
 	end
 
 	always @(posedge display_clock) begin
-		if (ctrl_en) begin
+		if (ctrl_en == panel_index) begin
 			video_mem[ctrl_addr] <= ctrl_wdat;
 		end
 	end

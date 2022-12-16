@@ -27,7 +27,7 @@ function send_image_to_port($sock, $im, $port)
     {
         $msg = "";
         // header
-        $msg .= pack("CC", 5, $y);
+        $msg .= pack("CC", 4, $y);
 
         for ($x = 0; $x < $width; $x++)
         {

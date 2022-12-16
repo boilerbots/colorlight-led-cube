@@ -96,7 +96,7 @@ module top
                             .udp0_source_error    (udp0_source_error    ),
     );
 
-    wire [8:0]  ctrl_en;
+    wire [7:0]  ctrl_en;
     wire [3:0]  ctrl_wr;
     wire [15:0] ctrl_addr;
     wire [23:0] ctrl_wdat;
@@ -132,8 +132,9 @@ module top
     generate
         for (panel_index = 0; panel_index <= 8; panel_index=panel_index+1) begin
             ledpanel panel_inst (
+                .panel_index(panel_index),
                 .ctrl_clk(clock),
-                .ctrl_en(ctrl_en[panel_index]),
+                .ctrl_en(ctrl_en),
                 .ctrl_addr(ctrl_addr),   // Addr to write color info on [col_info][row_info]
                 .ctrl_wdat(ctrl_wdat),   // Data to be written [R][G][B]
 
