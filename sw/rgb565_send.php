@@ -50,9 +50,9 @@ function send_image_to_port($sock, $im, $panel)
             $green = $color_tran['green'];
             $blue = $color_tran['blue'];
 
-            $r = ($red  * 0.6 >> 3) & 0x1f;
-            $g = (($green  * 0.6 >> 2) & 0x3f) << 5;
-            $b = (($blue  * 0.6 >> 3) & 0x1f) << 11;
+            $r = ($red  * 1 >> 3) & 0x1f;
+            $g = (($green  * 1 >> 2) & 0x3f) << 5;
+            $b = (($blue  * 1 >> 3) & 0x1f) << 11;
 
             // data
             $msg .= pack("n", ($r | $g | $b));
