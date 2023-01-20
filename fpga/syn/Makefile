@@ -34,6 +34,9 @@ flash.svf : top.bit
 prog : top.svf
 	openocd -f openocd.cfg -c "transport select jtag; init; scan_chain; svf top.svf; shutdown; quit"
 
+flash : flash.svf
+	openocd -f openocd.cfg -c "transport select jtag; init; scan_chain; svf flash.svf; shutdown; quit"
+
 clean:
 	rm -f ../liteeth_core.*
 	rm -f ../pll.v

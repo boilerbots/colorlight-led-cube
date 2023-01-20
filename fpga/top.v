@@ -130,7 +130,7 @@ module top
     wire [8:0] CLK_int;
 
     generate
-        for (panel_index = 0; panel_index <= 8; panel_index=panel_index+1) begin
+        for (panel_index = 0; panel_index < 6; panel_index=panel_index+1) begin
             ledpanel panel_inst (
                 .panel_index(panel_index),
                 .ctrl_clk(clock),

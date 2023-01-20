@@ -24,7 +24,7 @@ module ledpanel (
 	output reg panel_a, panel_b, panel_c, panel_d, panel_e, panel_clk, panel_stb, panel_oe
 );
 
-	localparam integer HEIGHT               = 32;
+	localparam integer HEIGHT               = 64;
 	localparam integer WIDTH                = 64;
 	localparam integer PIXEL_COUNT          = HEIGHT * WIDTH;
 	localparam integer INPUT_DEPTH          = BITS_RED + BITS_GREEN + BITS_BLUE;	// bits of color before gamma correction
@@ -40,7 +40,7 @@ module ledpanel (
 
 	localparam integer SIZE_BITS = 1;
 
-	localparam integer RGB1_OFFSET = 16; // height offset between RGB0 and RGB1 lines
+	localparam integer RGB1_OFFSET = 32; // height offset between RGB0 and RGB1 lines
 
 	reg [INPUT_DEPTH-1:0] video_mem [0:PIXEL_COUNT-1];
 
@@ -139,8 +139,8 @@ module ledpanel (
 	always @(posedge display_clock) begin
 		if (ctrl2_clk) begin
 			addr_x		<= cnt_x[BITS_WIDTH:0];
-			addr_y_rgb0 	<= cnt_y[BITS_HEIGHT:0];
-			addr_y_rgb1 	<= cnt_y[BITS_HEIGHT:0] + RGB1_OFFSET;
+			addr_y_rgb0 <= cnt_y[BITS_HEIGHT:0];
+			addr_y_rgb1 <= cnt_y[BITS_HEIGHT:0] + RGB1_OFFSET;
 			addr_z  	<= cnt_z;
 		end
 	end
@@ -170,7 +170,7 @@ module ledpanel (
 	always @(posedge display_clock) begin
 		if (ctrl2_clk) begin
 			if (!state) begin
-				if ((0 < cnt_x && cnt_x < WIDTH+1) && (cnt_y < 16)) begin
+				if ((cnt_x > 0 && cnt_x <= WIDTH) && (cnt_y < RGB1_OFFSET)) begin
 					{panel_r1, panel_r0} <= {data_rgb[1], data_rgb[0]};
 					{panel_g1, panel_g0} <= {data_rgb[3], data_rgb[2]};
 					{panel_b1, panel_b0} <= {data_rgb[5], data_rgb[4]};
