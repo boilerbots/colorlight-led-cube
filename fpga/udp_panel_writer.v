@@ -67,13 +67,14 @@ module udp_panel_writer
 						end
 						if (byte_count == 2) begin
 								data[7:0] = udp0_source_data[7:0];
-								addr_x = addr_x + 1;
 								byte_count           = 0;
 								ctrl_en              = panel_index;
 								ctrl_addr            = 0;
 								ctrl_addr[5:0]		 = addr_x;
 								ctrl_addr[11:6]      = addr_y;
 								ctrl_wdat[15:0]      = data[15:0];
+
+								addr_x = addr_x + 1;
 						end
 
 						if (udp0_source_last) begin

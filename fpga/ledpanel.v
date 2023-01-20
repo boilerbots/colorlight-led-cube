@@ -42,7 +42,8 @@ module ledpanel (
 
 	localparam integer RGB1_OFFSET = 32; // height offset between RGB0 and RGB1 lines
 
-	reg [INPUT_DEPTH-1:0] video_mem [0:PIXEL_COUNT-1];
+	reg [INPUT_DEPTH-1:0] video_mem_rgb0 [0:PIXEL_COUNT / 2 - 1];
+	reg [INPUT_DEPTH-1:0] video_mem_rgb1 [0:PIXEL_COUNT / 2 - 1];
 
 	reg [COLOR_DEPTH-1:0] gamma_mem_red   [0:(2**BITS_RED)-1];
 	reg [COLOR_DEPTH-1:0] gamma_mem_green [0:(2**BITS_GREEN)-1];
@@ -59,7 +60,8 @@ module ledpanel (
 		$readmemh("gamma_6_to_7.mem",gamma_mem_green);
 		$readmemh("gamma_5_to_7.mem",gamma_mem_blue);
 
-		$readmemh("Bliss.mem",video_mem);
+		$readmemh("no_signal.rgb0",video_mem_rgb0);
+		$readmemh("no_signal.rgb1",video_mem_rgb1);
 	end
 
 	reg ctrl2_clk = 0;
@@ -69,7 +71,11 @@ module ledpanel (
 
 	always @(posedge display_clock) begin
 		if (ctrl_en == panel_index) begin
-			video_mem[ctrl_addr] <= ctrl_wdat;
+			if (ctrl_addr[11:6] >= RGB1_OFFSET) begin
+				video_mem_rgb1[ctrl_addr - (RGB1_OFFSET << 6)] <= ctrl_wdat;
+			end else begin
+				video_mem_rgb0[ctrl_addr] <= ctrl_wdat;
+			end
 		end
 	end
 
@@ -148,22 +154,22 @@ module ledpanel (
 	always @(posedge display_clock) begin
 		if (ctrl2_clk) begin
 			// Red - 4:0
-			data_rgb[0] = gamma_mem_red[video_mem[{addr_y_rgb0, addr_x}][BITS_RED-1:0]][addr_z];
-			data_rgb[1] = gamma_mem_red[video_mem[{addr_y_rgb1, addr_x}][BITS_RED-1:0]][addr_z];
+			data_rgb[0] <= gamma_mem_red[video_mem_rgb0[{addr_y_rgb0, addr_x}][BITS_RED-1:0]][addr_z];
+			data_rgb[1] <= gamma_mem_red[video_mem_rgb1[{addr_y_rgb0, addr_x}][BITS_RED-1:0]][addr_z];
 		end
 	end
 	always @(posedge display_clock) begin
 		if (ctrl2_clk) begin
 			// Green - 10:5
-			data_rgb[2] = gamma_mem_green[video_mem[{addr_y_rgb0, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
-			data_rgb[3] = gamma_mem_green[video_mem[{addr_y_rgb1, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
+			data_rgb[2] <= gamma_mem_green[video_mem_rgb0[{addr_y_rgb0, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
+			data_rgb[3] <= gamma_mem_green[video_mem_rgb1[{addr_y_rgb0, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
 		end
 	end
 	always @(posedge display_clock) begin
 		if (ctrl2_clk) begin
-		// Blue - 15:11
-		data_rgb[4] = gamma_mem_blue[video_mem[{addr_y_rgb0, addr_x}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
-		data_rgb[5] = gamma_mem_blue[video_mem[{addr_y_rgb1, addr_x}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
+			// Blue - 15:11
+			data_rgb[4] <= gamma_mem_blue[video_mem_rgb0[{addr_y_rgb0, addr_x}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
+			data_rgb[5] <= gamma_mem_blue[video_mem_rgb1[{addr_y_rgb0, addr_x}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
 		end
 	end
 
