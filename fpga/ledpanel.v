@@ -195,7 +195,7 @@ module ledpanel (
 	 */
 	reg [BITS_WIDTH + COLOR_DEPTH + 3 - 1:0] cnt_x_latched;
 	always @(posedge display_clock) begin
-		addr_x = cnt_x[BITS_WIDTH - 1:0];
+		addr_x = cnt_x[BITS_WIDTH:0] - 1;
 		addr_y = cnt_y[BITS_HEIGHT - 1:0];
 		addr_z = cnt_z;
 		cnt_x_latched = cnt_x;
@@ -225,7 +225,7 @@ module ledpanel (
 	 */
 	always @(posedge display_clock) begin
 		if (!state) begin
-			if (cnt_x_latched > 0 && cnt_x_latched <= WIDTH) begin
+			if (cnt_x_latched > 0 && cnt_x_latched <= WIDTH + 1) begin
 				{panel_r1, panel_r0} = {data_rgb[1], data_rgb[0]};
 				{panel_g1, panel_g0} = {data_rgb[3], data_rgb[2]};
 				{panel_b1, panel_b0} = {data_rgb[5], data_rgb[4]};
