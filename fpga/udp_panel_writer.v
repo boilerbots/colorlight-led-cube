@@ -19,7 +19,7 @@ module udp_panel_writer
 
 	reg [2:0] udp_state;
 
-	reg [15:0] data;
+	reg [23:0] data;
 	reg [15:0] byte_count;
 
 	reg [7:0] panel_index;
@@ -63,16 +63,19 @@ module udp_panel_writer
 						byte_count = byte_count + 1;
 
 						if (byte_count == 1) begin
-								data[15:8] = udp0_source_data[7:0];
+								data[23:16] = udp0_source_data[7:0];
 						end
 						if (byte_count == 2) begin
+								data[15:8] = udp0_source_data[7:0];
+						end
+						if (byte_count == 3) begin
 								data[7:0] = udp0_source_data[7:0];
 								byte_count           = 0;
 								ctrl_en              = panel_index;
 								ctrl_addr            = 0;
 								ctrl_addr[5:0]		 = addr_x;
 								ctrl_addr[11:6]      = addr_y;
-								ctrl_wdat[15:0]      = data[15:0];
+								ctrl_wdat[23:0]      = data[23:0];
 
 								addr_x = addr_x + 1;
 						end

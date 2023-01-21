@@ -1,7 +1,7 @@
 // Description of the LED panel:
 // http://bikerglen.com/projects/lighting/led-panel-1up/#The_LED_Panel
 //
-// PANEL_[ABCD] ... select rows (in pairs from top and bottom half)
+// PANEL_[ABCDE] ... select rows (in pairs from top and bottom half)
 // PANEL_OE ....... display the selected rows (active low)
 // PANEL_CLK ...... serial clock for color data
 // PANEL_STB ...... latch shifted data (active high)
@@ -16,7 +16,7 @@ module ledpanel (
 
 	input wire [7:0]			ctrl_en,	// index of panel to write to + 1, 0 selects no panel at all
 	input wire [15:0]			ctrl_addr,	// addr to write color info on [col_info][row_info]
-	input wire [INPUT_DEPTH:0]	ctrl_wdat,	// RGB565 datum to be written
+	input wire [INPUT_DEPTH-1:0]	ctrl_wdat,	// RGB565 datum to be written
 
 	input wire display_clock,				// clock driving both the display itself and and ctrl bus
 
@@ -33,12 +33,11 @@ module ledpanel (
 	localparam integer WIDTH                = 64;
 	localparam integer RGB1_OFFSET			= 32; // height offset between RGB0 and RGB1 lines
 
-
 	localparam integer COLOR_DEPTH          = 6; // bits of color after gamma correction
 
-	localparam integer BITS_RED             = 5;
-	localparam integer BITS_GREEN           = 6;
-	localparam integer BITS_BLUE            = 5;
+	localparam integer BITS_RED             = 8;
+	localparam integer BITS_GREEN           = 8;
+	localparam integer BITS_BLUE            = 8;
 
 	localparam integer PIXEL_COUNT          = HEIGHT * WIDTH;
 	localparam integer INPUT_DEPTH          = BITS_RED + BITS_GREEN + BITS_BLUE; // bits of color before gamma correction
@@ -64,9 +63,9 @@ module ledpanel (
 		 * Gamma correction tables specific to selected bit depths.
 		 * Needs to map BITS_{REG,GREEN,BLUE} to COLOR_DEPTH bits
 		 */
-		$readmemh("gamma_5_to_6.mem",gamma_mem_red);
-		$readmemh("gamma_6_to_6.mem",gamma_mem_green);
-		$readmemh("gamma_5_to_6.mem",gamma_mem_blue);
+		$readmemh("gamma_8_to_6.mem",gamma_mem_red);
+		$readmemh("gamma_8_to_6.mem",gamma_mem_green);
+		$readmemh("gamma_8_to_6.mem",gamma_mem_blue);
 
 		/*
 		 * Initial data for video memory. Non gamma-corrected,
