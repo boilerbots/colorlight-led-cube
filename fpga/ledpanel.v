@@ -34,6 +34,7 @@ module ledpanel (
 	localparam integer RGB1_OFFSET			= 24; // height offset between RGB0 and RGB1 lines
 
 	localparam integer COLOR_DEPTH          = 6; // bits of color after gamma correction
+  localparam integer BRIGHTNESS = 1;
 
 	localparam integer BITS_RED             = 8;
 	localparam integer BITS_GREEN           = 8;
@@ -231,7 +232,7 @@ module ledpanel (
 	 */
 	always @(posedge display_clock) begin
 		if (!state) begin
-			if (cnt_x_latched < WIDTH) begin
+			if (cnt_x_latched < WIDTH && addr_z < BRIGHTNESS) begin
 				{panel_r1, panel_r0} = {data_rgb[1], data_rgb[0]};
 				{panel_g1, panel_g0} = {data_rgb[3], data_rgb[2]};
 				{panel_b1, panel_b0} = {data_rgb[5], data_rgb[4]};
