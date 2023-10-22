@@ -1,13 +1,10 @@
-SOURCE :=../liteeth_core.v \
-         ../udp_panel_writer.v \
-         ../ledpanel.v \
+SOURCE := ../ledpanel.v \
          ../pll.v \
-         ../phy_io.v \
          ../top.v
 
 YOSYS_SCRIPT:=syn.ys
 
-all : top.svf
+all : top.bit
 
 ../pll.v :
 	ecppll -i 25 --clkout0_name clock --clkout0 125 --clkout1_name panel_clock --clkout1 125 -f ../pll.v
@@ -24,11 +21,11 @@ top.config : top.json
 top.bit : top.config
 	ecppack top.config top.bit
 
-top.svf : top.bit
-	./bit_to_svf.py top.bit top.svf
+#top.svf : top.bit
+#	./bit_to_svf.py top.bit top.svf
 
-flash.svf : top.bit
-	./bit_to_flash.py top.bit flash.svf
+#flash.svf : top.bit
+#	./bit_to_flash.py top.bit flash.svf
 
 
 prog : top.svf

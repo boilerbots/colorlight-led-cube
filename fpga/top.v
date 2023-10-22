@@ -1,21 +1,24 @@
 `default_nettype none
+
+localparam integer PANEL_COUNT = 6;
+
 module top
     (
     input wire osc25m,
-    /*
-     * RGMII interface
-     */
-    input  wire                       rgmii_rx_clk,
-    input  wire [3:0]                 rgmii_rxd,
-    input  wire                       rgmii_rx_ctl,
-    output wire                       rgmii_tx_clk,
-    output wire [3:0]                 rgmii_txd,
-    output wire                       rgmii_tx_ctl,
-    /*
-     * MDIO interface
-     */
-    output wire mdio_scl,
-    output wire mdio_sda,
+    ///*
+    // * RGMII interface
+    // */
+    //input  wire                       rgmii_rx_clk,
+    //input  wire [3:0]                 rgmii_rxd,
+    //input  wire                       rgmii_rx_ctl,
+    //output wire                       rgmii_tx_clk,
+    //output wire [3:0]                 rgmii_txd,
+    //output wire                       rgmii_tx_ctl,
+    ///*
+    // * MDIO interface
+    // */
+    //output wire mdio_scl,
+    //output wire mdio_sda,
     /*
      * USER I/O (Button, LED)
      */
@@ -23,12 +26,12 @@ module top
     output wire led,
     output wire phy_resetn,
 
-    output wire [8:0] R0,
-    output wire [8:0] G0,
-    output wire [8:0] B0,
-    output wire [8:0] R1,
-    output wire [8:0] G1,
-    output wire [8:0] B1,
+    output wire [PANEL_COUNT - 1:0] R0,
+    output wire [PANEL_COUNT - 1:0] G0,
+    output wire [PANEL_COUNT - 1:0] B0,
+    output wire [PANEL_COUNT - 1:0] R1,
+    output wire [PANEL_COUNT - 1:0] G1,
+    output wire [PANEL_COUNT - 1:0] B1,
     output wire A,
     output wire B,
     output wire C,
@@ -61,62 +64,62 @@ module top
         end
     end
 
-    wire          udp0_sink_valid;
-    wire          udp0_sink_last;
-    wire          udp0_sink_ready;
-    wire    [7:0] udp0_sink_data;
-    wire          udp0_source_valid;
-    wire          udp0_source_last;
-    wire          udp0_source_ready;
-    wire    [7:0] udp0_source_data;
-    wire          udp0_source_error;
+    //wire          udp0_sink_valid;
+    //wire          udp0_sink_last;
+    //wire          udp0_sink_ready;
+    //wire    [7:0] udp0_sink_data;
+    //wire          udp0_source_valid;
+    //wire          udp0_source_last;
+    //wire          udp0_source_ready;
+    //wire    [7:0] udp0_source_data;
+    //wire          udp0_source_error;
 
 
-    liteeth_core ethernet (
-        /* input         */ .sys_clock            (clock                ),
-        /* input         */ .sys_reset            (reset),
-        /* output        */ .rgmii_eth_clocks_tx  (rgmii_tx_clk         ),
-        /* input         */ .rgmii_eth_clocks_rx  (rgmii_rx_clk         ),
-        /* output        */ .rgmii_eth_rst_n      (                     ),
-        /* input         */ .rgmii_eth_int_n      (                     ),
-        /* inout         */ .rgmii_eth_mdio       (                     ),
-        /* output        */ .rgmii_eth_mdc        (                     ),
-        /* input         */ .rgmii_eth_rx_ctl     (rgmii_rx_ctl         ),
-        /* input  [3:0]  */ .rgmii_eth_rx_data    (rgmii_rxd            ),
-        /* output        */ .rgmii_eth_tx_ctl     (rgmii_tx_ctl         ),
-        /* output [3:0]  */ .rgmii_eth_tx_data    (rgmii_txd            ),
-                            .udp0_sink_valid      (udp0_sink_valid      ),
-                            .udp0_sink_last       (udp0_sink_last       ),
-                            .udp0_sink_ready      (udp0_sink_ready      ),
-                            .udp0_sink_data       (udp0_sink_data       ),
-                            .udp0_source_valid    (udp0_source_valid    ),
-                            .udp0_source_last     (udp0_source_last     ),
-                            .udp0_source_ready    (udp0_source_ready    ),
-                            .udp0_source_data     (udp0_source_data     ),
-                            .udp0_source_error    (udp0_source_error    ),
-    );
+    //liteeth_core ethernet (
+    //    /* input         */ .sys_clock            (clock                ),
+    //    /* input         */ .sys_reset            (reset),
+    //    /* output        */ .rgmii_eth_clocks_tx  (rgmii_tx_clk         ),
+    //    /* input         */ .rgmii_eth_clocks_rx  (rgmii_rx_clk         ),
+    //    /* output        */ .rgmii_eth_rst_n      (                     ),
+    //    /* input         */ .rgmii_eth_int_n      (                     ),
+    //    /* inout         */ .rgmii_eth_mdio       (                     ),
+    //    /* output        */ .rgmii_eth_mdc        (                     ),
+    //    /* input         */ .rgmii_eth_rx_ctl     (rgmii_rx_ctl         ),
+    //    /* input  [3:0]  */ .rgmii_eth_rx_data    (rgmii_rxd            ),
+    //    /* output        */ .rgmii_eth_tx_ctl     (rgmii_tx_ctl         ),
+    //    /* output [3:0]  */ .rgmii_eth_tx_data    (rgmii_txd            ),
+    //                        .udp0_sink_valid      (udp0_sink_valid      ),
+    //                        .udp0_sink_last       (udp0_sink_last       ),
+    //                        .udp0_sink_ready      (udp0_sink_ready      ),
+    //                        .udp0_sink_data       (udp0_sink_data       ),
+    //                        .udp0_source_valid    (udp0_source_valid    ),
+    //                        .udp0_source_last     (udp0_source_last     ),
+    //                        .udp0_source_ready    (udp0_source_ready    ),
+    //                        .udp0_source_data     (udp0_source_data     ),
+    //                        .udp0_source_error    (udp0_source_error    ),
+    //);
 
     wire [7:0]  ctrl_en;
     wire [3:0]  ctrl_wr;
     wire [15:0] ctrl_addr;
     wire [23:0] ctrl_wdat;
 
-    udp_panel_writer udp_inst
-                    (.clock(clock),
-                     .reset(reset),
+    //udp_panel_writer udp_inst
+    //                (.clock(clock),
+    //                 .reset(reset),
 
-                     .udp0_source_valid    (udp0_source_valid    ),
-                     .udp0_source_last     (udp0_source_last     ),
-                     .udp0_source_ready    (udp0_source_ready    ),
-                     .udp0_source_data     (udp0_source_data     ),
-                     .udp0_source_error    (udp0_source_error    ),
+    //                 .udp0_source_valid    (udp0_source_valid    ),
+    //                 .udp0_source_last     (udp0_source_last     ),
+    //                 .udp0_source_ready    (udp0_source_ready    ),
+    //                 .udp0_source_data     (udp0_source_data     ),
+    //                 .udp0_source_error    (udp0_source_error    ),
 
-                     .ctrl_en(ctrl_en),
-                     .ctrl_wr(ctrl_wr),
-                     .ctrl_addr(ctrl_addr),
-                     .ctrl_wdat(ctrl_wdat),
-                     .led_reg(led)
-                     );
+    //                 .ctrl_en(ctrl_en),
+    //                 .ctrl_wr(ctrl_wr),
+    //                 .ctrl_addr(ctrl_addr),
+    //                 .ctrl_wdat(ctrl_wdat),
+    //                 .led_reg(led)
+    //                 );
 
     genvar panel_index;
 
@@ -130,7 +133,7 @@ module top
     wire [8:0] CLK_int;
 
     generate
-        for (panel_index = 0; panel_index < 9; panel_index=panel_index+1) begin
+        for (panel_index = 0; panel_index < PANEL_COUNT; panel_index=panel_index+1) begin
             ledpanel panel_inst (
                 .panel_index(panel_index + 1),
                 .ctrl_en(ctrl_en),

@@ -29,9 +29,9 @@ module ledpanel (
 	 * Panel configuration. This set of parameters depends entirely on the
 	 * HUB75 panel used.
 	 */
-	localparam integer HEIGHT               = 64;
-	localparam integer WIDTH                = 64;
-	localparam integer RGB1_OFFSET			= 32; // height offset between RGB0 and RGB1 lines
+	localparam integer HEIGHT               = 48;
+	localparam integer WIDTH                = 96;
+	localparam integer RGB1_OFFSET			= 24; // height offset between RGB0 and RGB1 lines
 
 	localparam integer COLOR_DEPTH          = 6; // bits of color after gamma correction
 
@@ -41,9 +41,9 @@ module ledpanel (
 
 	localparam integer PIXEL_COUNT          = HEIGHT * WIDTH;
 	localparam integer INPUT_DEPTH          = BITS_RED + BITS_GREEN + BITS_BLUE; // bits of color before gamma correction
-	localparam integer BITS_HEIGHT          = $clog2(HEIGHT) - 1;
-	localparam integer BITS_WIDTH           = $clog2(WIDTH);
-	localparam integer BITS_COLOR_DEPTH     = $clog2(COLOR_DEPTH);
+	localparam integer BITS_HEIGHT          = 5; //$clog2(HEIGHT) - 1;
+	localparam integer BITS_WIDTH           = 7; //$clog2(WIDTH);
+	localparam integer BITS_COLOR_DEPTH     = 3; //$clog2(COLOR_DEPTH);
 
 	reg [INPUT_DEPTH-1:0] video_mem_rgb0 [0:PIXEL_COUNT / 2 - 1];
 	reg [INPUT_DEPTH-1:0] video_mem_rgb1 [0:PIXEL_COUNT / 2 - 1];
@@ -75,22 +75,23 @@ module ledpanel (
 		$readmemh("no_signal.rgb1",video_mem_rgb1);
 	end
 
-	always @(posedge display_clock) begin
-		if (ctrl_en == panel_index) begin
-			if (ctrl_addr[15:BITS_WIDTH] >= RGB1_OFFSET) begin
-				video_mem_rgb1[ctrl_addr - (RGB1_OFFSET * WIDTH)] <= ctrl_wdat;
-			end else begin
-				video_mem_rgb0[ctrl_addr] <= ctrl_wdat;
-			end
-		end
-	end
+	//always @(posedge display_clock) begin
+	//	if (ctrl_en == panel_index) begin
+	//		if (ctrl_addr[15:BITS_WIDTH] >= RGB1_OFFSET) begin
+	//			video_mem_rgb1[ctrl_addr - (RGB1_OFFSET * WIDTH)] <= ctrl_wdat;
+	//		end else begin
+	//			video_mem_rgb0[ctrl_addr] <= ctrl_wdat;
+	//		end
+	//	end
+	//end
 
-	reg [BITS_WIDTH + COLOR_DEPTH + 3 - 1:0]	cnt_x = 0;
+	reg [BITS_WIDTH + COLOR_DEPTH - 1:0]	cnt_x = 0;
 	reg [BITS_HEIGHT - 1:0]						cnt_y = 0;
 	reg [BITS_COLOR_DEPTH - 1:0]				cnt_z = 0;
 
-	reg [BITS_WIDTH - 1:0]						addr_x;
-	reg [BITS_HEIGHT - 1:0]						addr_y;
+	//reg [BITS_WIDTH - 1:0]						addr_x;
+	//reg [BITS_HEIGHT - 1:0]						addr_y;
+	reg [11:0]						ram_addr;
 	reg [BITS_COLOR_DEPTH - 1:0]				addr_z;
 	reg [5:0]									data_rgb; // R0, G0, B0, R1, G1, G2 -> 6 bits
 
@@ -125,14 +126,18 @@ module ledpanel (
 	always @(posedge display_clock) begin
 		if (clkdiv) begin
 			if (state) begin
-				if (cnt_x == (WIDTH << cnt_z) + 8) begin
+				if (cnt_x == (WIDTH + 4)) begin
 					cnt_x = 0;
-					if (cnt_z == COLOR_DEPTH-1) begin
-						cnt_y = cnt_y + 1;
-						cnt_z = 0;
-					end else begin
-						cnt_z = cnt_z + 1;
-					end
+          if (cnt_z == COLOR_DEPTH-1) begin
+            cnt_z = 0;
+            if (cnt_y == HEIGHT / 2) begin
+              cnt_y = 0;
+            end else begin
+              cnt_y = cnt_y + 1;
+            end
+          end else begin
+            cnt_z = cnt_z + 1;
+          end
 				end else begin
 					cnt_x = cnt_x + 1;
 				end
@@ -157,7 +162,7 @@ module ledpanel (
 	 */
 	always @(posedge display_clock) begin
 		if (state) begin
-			panel_clk = cnt_x > 1 && cnt_x < WIDTH + 2;
+			panel_clk = cnt_x < WIDTH;
 		end else begin
 			panel_clk = 0;
 		end
@@ -174,9 +179,9 @@ module ledpanel (
 		if (cnt_x == WIDTH) begin
 			{panel_e, panel_d, panel_c, panel_b, panel_a} <= cnt_y;
 		end
-
-		panel_stb = cnt_x == WIDTH+2;
 	end
+
+  assign panel_stb = state & (cnt_x == WIDTH);
 
 	/*
 	 * To avoid artifacting we need to have some deadtime around
@@ -188,15 +193,16 @@ module ledpanel (
 	 * the line address. This is important since the line address
 	 * decoders are often really slow.
 	 */
-	assign panel_oe = cnt_x > WIDTH - 8 && cnt_x < WIDTH + 8;
+	assign panel_oe = cnt_x > WIDTH + 2;
 
+  assign ram_addr = (cnt_y * 96) + cnt_x;
 	/*
 	 * Relative display cycle zero. Latch addresses.
 	 */
-	reg [BITS_WIDTH + COLOR_DEPTH + 3 - 1:0] cnt_x_latched;
+	reg [BITS_WIDTH + COLOR_DEPTH - 1:0] cnt_x_latched;
 	always @(posedge display_clock) begin
-		addr_x = cnt_x[BITS_WIDTH:0] - 1;
-		addr_y = cnt_y[BITS_HEIGHT - 1:0];
+		//addr_x = cnt_x[BITS_WIDTH:0] - 1;
+		//addr_y = cnt_y[BITS_HEIGHT - 1:0];
 		addr_z = cnt_z;
 		cnt_x_latched = cnt_x;
 	end
@@ -206,14 +212,14 @@ module ledpanel (
 	 */
 	always @(posedge display_clock) begin
 		// Red - 4:0
-		data_rgb[0] = gamma_mem_red[video_mem_rgb0[{addr_y, addr_x}][BITS_RED-1:0]][addr_z];
-		data_rgb[1] = gamma_mem_red[video_mem_rgb1[{addr_y, addr_x}][BITS_RED-1:0]][addr_z];
+		data_rgb[0] = gamma_mem_red[video_mem_rgb0[ram_addr][BITS_RED-1:0]][addr_z];
+		data_rgb[1] = gamma_mem_red[video_mem_rgb1[ram_addr][BITS_RED-1:0]][addr_z];
 		// Green - 10:5
-		data_rgb[2] = gamma_mem_green[video_mem_rgb0[{addr_y, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
-		data_rgb[3] = gamma_mem_green[video_mem_rgb1[{addr_y, addr_x}][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
+		data_rgb[2] = gamma_mem_green[video_mem_rgb0[ram_addr][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
+		data_rgb[3] = gamma_mem_green[video_mem_rgb1[ram_addr][BITS_GREEN + BITS_RED-1:BITS_RED]][addr_z];
 		// Blue - 15:11
-		data_rgb[4] = gamma_mem_blue[video_mem_rgb0[{addr_y, addr_x}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
-		data_rgb[5] = gamma_mem_blue[video_mem_rgb1[{addr_y, addr_x}][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
+		data_rgb[4] = gamma_mem_blue[video_mem_rgb0[ram_addr][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
+		data_rgb[5] = gamma_mem_blue[video_mem_rgb1[ram_addr][BITS_GREEN + BITS_RED + BITS_BLUE-1:BITS_GREEN + BITS_RED]][addr_z];
 	end
 
 	/*
@@ -225,7 +231,7 @@ module ledpanel (
 	 */
 	always @(posedge display_clock) begin
 		if (!state) begin
-			if (cnt_x_latched > 0 && cnt_x_latched <= WIDTH + 1) begin
+			if (cnt_x_latched < WIDTH) begin
 				{panel_r1, panel_r0} = {data_rgb[1], data_rgb[0]};
 				{panel_g1, panel_g0} = {data_rgb[3], data_rgb[2]};
 				{panel_b1, panel_b0} = {data_rgb[5], data_rgb[4]};

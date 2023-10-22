@@ -1,15 +1,17 @@
 <?php
-$im = imagecreatefrompng('no_signal.png');
+//$im = imagecreatefrompng('no_signal.png');
+$im = imagecreatefrompng('color_bars_96x48.png');
 
 //$im = imagecreatefromjpeg('Bliss.jpg');
 $width = imagesx($im);
 $height = imagesy($im);
 
-$rgb_offset = 32;
+$rgb_offset = 24;
 
 $output_0 = "";
 $output_1 = "";
-
+echo "width=" . $width . "\n";
+echo "height=" . $height . "\n";
 for ($y = 0; $y < $height; $y++)
 {
 	for ($x = 0; $x < $width; $x++)
@@ -27,11 +29,11 @@ for ($y = 0; $y < $height; $y++)
 
 		if ($y >= $rgb_offset)
 		{
-			$output_1 .= dechex($r | $g | $b) . "\n";
+			$output_1 .= sprintf("%06x\n", ($r | $g | $b));
 		}
 		else
 		{
-			$output_0 .= dechex($r | $g | $b) . "\n";
+			$output_0 .= sprintf("%06x\n", ($r | $g | $b));
 		}
    }
 }

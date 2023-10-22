@@ -1,5 +1,6 @@
 <?php
-$im = imagecreatefrompng('no_signal.png');
+#$im = imagecreatefrompng('no_signal.png');
+$im = imagecreatefrompng('color_bars_96x48.png');
 
 //$im = imagecreatefromjpeg('Bliss.jpg');
 $width = imagesx($im);
@@ -21,6 +22,7 @@ for ($y = 0; $y < $height; $y++)
 		$g = (($green >> 2) & 0x3f) << 5;
 		$b = (($blue >> 3) & 0x1f) << 11;
 
-		echo dechex($r | $g | $b) . "\n";
+		$hex = sprintf("%06x\n", ($r | $g | $b));
+    echo $hex;
    }
 }
